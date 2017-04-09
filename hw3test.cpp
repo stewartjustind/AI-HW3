@@ -15,7 +15,7 @@
 using namespace std;
 
 const int MAX_TTURTLES = 3;
-const int MAX_XTURTLES = 4;
+const int MAX_XTURTLES = 3;
 const double DANGER_TOLERANCE = 0.5;
 const double LOWER_LIMIT = 0.0;
 const double UPPER_LIMIT = 11.0;
@@ -287,7 +287,7 @@ void Turtle1Listener::doTest(const turtlesim::Pose::ConstPtr& msg) {
   if (isTooClose())
      HW::removeTurtle1();
 
-   cout << "(" << HW::turtle1.pose.x << "," << HW::turtle1.pose.y << ")" << endl;
+   //cout << "(" << HW::turtle1.pose.x << "," << HW::turtle1.pose.y << ")" << endl;
 
    moveTurtle();
      
@@ -468,8 +468,6 @@ class HWTest {
     //ADDED
     //void moveTurtle();
 
-
-
   private:
     ros::NodeHandle _nh; 
     ros::Subscriber _turtle1sub;
@@ -524,7 +522,7 @@ void HWTest::startTest() {
   ROS_INFO_STREAM("3. X turtle will capture turtle1 within the distance " << DANGER_TOLERANCE);
   ROS_INFO_STREAM("-----------------------------------------------");
 
-  ros::Rate loop_rate(.1);
+  ros::Rate loop_rate(1);
   
   /*do
   {
@@ -535,7 +533,6 @@ void HWTest::startTest() {
   */
   ros::spin();
   }
-
 
 
 int main(int argc, char **argv) {
