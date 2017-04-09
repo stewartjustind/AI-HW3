@@ -268,6 +268,9 @@ class Turtle1Listener {
     bool isOffBoundary();
     bool isTooClose();
     bool closeToKill();
+
+    //added
+    void moveTurtle();
 };
 
 //turtle1 callback
@@ -283,6 +286,10 @@ void Turtle1Listener::doTest(const turtlesim::Pose::ConstPtr& msg) {
   //test case2
   if (isTooClose())
      HW::removeTurtle1();
+
+   cout << "(" << HW::turtle1.pose.x << "," << HW::turtle1.pose.y << ")" << endl;
+
+   moveTurtle();
      
   //test case3
   //if (closeToKill())
@@ -339,6 +346,47 @@ bool Turtle1Listener::closeToKill() {
      };
   };       
   return toCapture; 
+}
+
+//ADDED
+void Turtle1Listener::moveTurtle()
+{
+  ros::NodeHandle nh;
+
+  //ros::Publisher pub = HWTest::_nh.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 1000);
+  ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 1000);
+  geometry_msgs::Twist msg;
+  int closestTurtle = 0;
+
+  double distanceToTurtle = 100000;
+  double tempDistance = 0;
+
+    for(int i = 0; i < MAX_TTURTLES; i++)
+    {
+      tempDistance = HW::getDistance(HW::tturtles[i].pose.x, HW::tturtles[i].pose.y, HW::turtle1.pose.x, HW::turtle1.pose.y);
+      //cout << "Distance to turtle[" << i << "]: " << distanceToTurtle << endl;
+      //cout << "tempDistance: " << tempDistance << endl;
+      if (tempDistance < distanceToTurtle)
+      {
+        distanceToTurtle = tempDistance;
+        closestTurtle = i;
+      }
+      //cout << "Closest Turtle is turtle[" << closestTurtle << "]" << endl << endl;;
+    }
+    
+    msg.linear.x = 1;
+    msg.linear.y = 0;
+    msg.linear.z = 0;
+    msg.angular.x = 0;
+    msg.angular.y = 0;
+    msg.angular.z = atan(((HW::tturtles[closestTurtle].pose.y - HW::turtle1.pose.y) / (HW::tturtles[closestTurtle].pose.x - HW::turtle1.pose.x) - HW::turtle1.pose.theta));
+
+    cout << "Moving towards : (" << HW::tturtles[closestTurtle].pose.x << " , " << HW::tturtles[closestTurtle].pose.y << ")" << endl;
+    cout << "Current Position: (" << HW::turtle1.pose.x << " , " << HW::turtle1.pose.y << ")" << endl;
+    cout << "Angular z: " << msg.angular.z << endl;
+    
+    pub.publish(msg);
+
 }
 
 class XTurtleListener {
@@ -418,7 +466,9 @@ class HWTest {
     void startTest();
 
     //ADDED
-    void moveTurtle();
+    //void moveTurtle();
+
+
 
   private:
     ros::NodeHandle _nh; 
@@ -474,52 +524,19 @@ void HWTest::startTest() {
   ROS_INFO_STREAM("3. X turtle will capture turtle1 within the distance " << DANGER_TOLERANCE);
   ROS_INFO_STREAM("-----------------------------------------------");
 
-  ros::Rate loop_rate(2);
-  do
+  ros::Rate loop_rate(.1);
+  
+  /*do
   {
       moveTurtle();
       ros::spinOnce();
       loop_rate.sleep();
   }while (HW::turtleExist("turtle1") && (killed < MAX_TTURTLES));
-  //ros::spin();
+  */
+  ros::spin();
   }
 
-//ADDED
-void HWTest::moveTurtle()
-{
-  ros::Publisher pub = HWTest::_nh.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 1000);
-  geometry_msgs::Twist msg;
-  int closestTurtle = 0;
 
-  while(HW::turtleExist("turtle1"))
-  {
-    //msg.linear.x = 1;
-    
-    //loopRate.sleep();
-
-
-  double distanceToTurtle = 100000;
-  double tempDistance = 0;
-
-  //ros::Rate loopRate(2);
-    for(int i = 0; i < MAX_TTURTLES; i++)
-    {
-      tempDistance = HW::getDistance(HW::tturtles[i].pose.x, HW::tturtles[i].pose.y, HW::turtle1.pose.x, HW::turtle1.pose.y);
-      //cout << "Distance to turtle[" << i << "]: " << distanceToTurtle << endl;
-      //cout << "tempDistance: " << tempDistance << endl;
-      if (tempDistance < distanceToTurtle)
-      {
-        distanceToTurtle = tempDistance;
-        closestTurtle = i;
-      }
-      //cout << "Closest Turtle is turtle[" << closestTurtle << "]" << endl << endl;;
-    }
-    
-    msg.linear.x = 1;
-    msg.angular.z = atan(((HW::tturtles[closestTurtle].pose.y - HW::turtle1.pose.x) / (HW::tturtles[closestTurtle].pose.x - HW::turtle1.pose.y) - HW::turtle1.pose.theta));
-    pub.publish(msg);
-  }
-}
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "HWTest");
@@ -531,6 +548,7 @@ int main(int argc, char **argv) {
   HWTest hw3t(&nh);
   hw3t.init();
   hw3t.startTest();
+  
   //loopRate.sleep();
 
   
