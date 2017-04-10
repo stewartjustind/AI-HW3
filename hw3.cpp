@@ -11,6 +11,7 @@
 
 #include "geometry_msgs/Twist.h"
 
+
 using namespace std;
 
 ros::Publisher velocity_publisher;
@@ -482,7 +483,7 @@ void HWTest::init() {
   for (i=0; i<MAX_XTURTLES; i++) {
      _xturtlesubs[i] = _nh.subscribe<turtlesim::Pose>(HW::xturtles[i].topicname, 1000, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[i], _1, HW::xturtles[i].turtlename));
   };
-  system("rosservice call /turtle1/teleport_absolute 0 0 0");
+  system("rosservice call /turtle1/teleport_absolute 0 11 0");
   system("rosservice call clear");
   for (i=0; i<MAX_TTURTLES; i++) {
       _tturtlesubs[i] = _nh.subscribe<turtlesim::Pose>(HW::tturtles[i].topicname, 1000, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[i], _1, HW::tturtles[i].turtlename));
@@ -514,7 +515,6 @@ int main(int argc, char **argv) {
     velocity_publisher = n.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel", 1000);
     pose_subscriber = n.subscribe("/turtle1/pose", 10, poseCallback);
 
-
     //ADDED
     turtle1_pose_pub = n.advertise<turtlesim::Pose>("/turtle1/pose", 1000);
 
@@ -530,6 +530,10 @@ int main(int argc, char **argv) {
     _xturtlesubs[3] = n.subscribe<turtlesim::Pose>("/X4/pose", 10, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[3], _1, "X4"));*/
 
     ros::Rate loop_rate(10);
+    
+    HWTest hw3t(&nh);
+ 		hw3t.init();
+  	hw3t.startTest();
 
     ROS_INFO_STREAM("\n\n\n******START MOVING******\n");
 
@@ -541,9 +545,9 @@ int main(int argc, char **argv) {
     ros::spin();
 
 
-  HWTest hw3t(&nh);
+  /*HWTest hw3t(&nh);
   hw3t.init();
-  hw3t.startTest();
+  hw3t.startTest();*/
   //loopRate.sleep();
   return 0;
 }
@@ -681,6 +685,8 @@ void moveGoal (turtlesim::Pose goal_pose, double distance_tolerance) {
     }while(getDistance(turtle1.pose.x, turtle1.pose.y, goal_pose.x, goal_pose.y) > distance_tolerance);
 
     cout << "end move goal" << endl;
+    ros::shutdown();
+    
     vel_msg.linear.x = 0;
     vel_msg.angular.z = 0;
     velocity_publisher.publish(vel_msg);
