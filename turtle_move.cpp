@@ -14,12 +14,13 @@ ros::Publisher velocity_publisher;
 ros::Subscriber pose_subscriber;
 
 const int MAX_TTURTLES = 3;
-const int MAX_XTURTLES = 4;
+const int MAX_XTURTLES = 3;
 const double DANGER_TOLERANCE = 0.5;
 const double LOWER_LIMIT = 0.0;
 const double UPPER_LIMIT = 11.0;
 
 int killed = 0;
+bool searching = false;
 
 const double x_min = 0.0;
 const double y_min = 0.0;
@@ -74,8 +75,6 @@ void TTurtleListener::doTest(const turtlesim::Pose::ConstPtr& msg, const string 
     tturtles[turtleIdt].distanceToPlayer = getDistance(turtle1.pose.x, turtle1.pose.y, msg->x, msg->y);
 };
 
-void move(double speed, double distance, bool isForward);
-
 void poseCallback(const turtlesim::Pose::ConstPtr & pose_message);
 
 void rotate(double angular_speed, double relative_angle, bool clockwise);
@@ -100,77 +99,46 @@ int main(int argc, char **argv) {
     bool isForward, clockwise;
     int i;
 
+    _tturtlesubs[0] = n.subscribe<turtlesim::Pose>("/T1/pose", 1000, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[0], _1, "T1"));
+    _tturtlesubs[1] = n.subscribe<turtlesim::Pose>("/T2/pose", 1000, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[1], _1, "T2"));
+    _tturtlesubs[2] = n.subscribe<turtlesim::Pose>("/T3/pose", 1000, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[2], _1, "T3"));
+    _tturtlesubs[3] = n.subscribe<turtlesim::Pose>("/T4/pose", 1000, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[3], _1, "T4"));
+
+    _xturtlesubs[0] = n.subscribe<turtlesim::Pose>("/X1/pose", 1000, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[0], _1, "X1"));
+    _xturtlesubs[1] = n.subscribe<turtlesim::Pose>("/X2/pose", 1000, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[1], _1, "X2"));
+    _xturtlesubs[2] = n.subscribe<turtlesim::Pose>("/X3/pose", 1000, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[2], _1, "X3"));
+    _xturtlesubs[3] = n.subscribe<turtlesim::Pose>("/X4/pose", 1000, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[3], _1, "X4"));
+
     velocity_publisher = n.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel", 1000);
-    pose_subscriber = n.subscribe("/turtle1/pose", 10, poseCallback);
-
-
-    _tturtlesubs[0] = n.subscribe<turtlesim::Pose>("/T1/pose", 10, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[0], _1, "T1"));
-    _tturtlesubs[1] = n.subscribe<turtlesim::Pose>("/T2/pose", 10, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[1], _1, "T2"));
-    _tturtlesubs[2] = n.subscribe<turtlesim::Pose>("/T3/pose", 10, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[2], _1, "T3"));
-    _tturtlesubs[3] = n.subscribe<turtlesim::Pose>("/T4/pose", 10, boost::bind(&TTurtleListener::doTest, &_tturtlelisteners[3], _1, "T4"));
-
-    _xturtlesubs[0] = n.subscribe<turtlesim::Pose>("/X1/pose", 10, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[0], _1, "X1"));
-    _xturtlesubs[1] = n.subscribe<turtlesim::Pose>("/X2/pose", 10, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[1], _1, "X2"));
-    _xturtlesubs[2] = n.subscribe<turtlesim::Pose>("/X3/pose", 10, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[2], _1, "X3"));
-    _xturtlesubs[3] = n.subscribe<turtlesim::Pose>("/X4/pose", 10, boost::bind(&XTurtleListener::doTest, &_xturtlelisteners[3], _1, "X4"));
-
-    ros::Rate loop_rate(10);
+    pose_subscriber = n.subscribe("/turtle1/pose", 1000, poseCallback);
 
     ROS_INFO_STREAM("\n\n\n******START MOVING******\n");
 
-    // goal_pose.x = tturtles[0].pose.x;
-    // goal_pose.y = tturtles[0].pose.y;
-    // goal_pose.theta = tturtles[0].pose.theta;
-    // moveGoal(tturtles[1].pose, 0.01);
-    loop_rate.sleep();
     ros::spin();
 
     return 0;
-}
-
-void move(double speed, double distance, bool isForward) {
-    //distance = speed*time;
-    geometry_msgs::Twist vel_msg;
-
-    if(isForward) {
-        vel_msg.linear.x = abs(speed);
-    } else {
-        vel_msg.linear.x = -abs(speed);
-    }
-
-    vel_msg.linear.y = 0;
-    vel_msg.linear.z = 0;
-
-    vel_msg.angular.x = 0;
-    vel_msg.angular.y = 0;
-    vel_msg.angular.z = 0;
-
-    double t0 = ros::Time::now().toSec();
-    double current_distance = 0.0;
-    ros::Rate loop_rate(100);
-
-    double t1;
-
-    do {
-        velocity_publisher.publish(vel_msg);
-        t1 = ros::Time::now().toSec();
-        current_distance = speed*(t1-t0);
-        ros::spinOnce();
-        loop_rate.sleep();
-    } while(current_distance < distance);
-
-    vel_msg.linear.x = 0;
-    velocity_publisher.publish(vel_msg);
 }
 
 void poseCallback(const turtlesim::Pose::ConstPtr & pose_message) {
     turtle1.pose.x = pose_message->x;
     turtle1.pose.y = pose_message->y;
     turtle1.pose.theta = pose_message->theta;
+    int i;
 
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(1);
+    int closestTurtle = 0;
+    double shortDistance = 10000;
 
-    moveGoal(tturtles[1].pose, 0.01);
+    for(i = 0; i < MAX_TTURTLES; i++) {
+        if(tturtles[i].distanceToPlayer < shortDistance) {
+            closestTurtle = i;
+            shortDistance = tturtles[i].distanceToPlayer;
+        }
+    }
+
+    cout << "i = " << i << "shortestDistance = " << shortDistance << "\n";
+    moveGoal(tturtles[closestTurtle].pose, 0.01);
+
     loop_rate.sleep();
 }
 
@@ -218,6 +186,7 @@ void setDesiredOrientation (double desired_angle_radians) {
 }
 
 void moveGoal (turtlesim::Pose goal_pose, double distance_tolerance) {
+    cout << "First Attack: " << goal_pose.x << ", " << goal_pose.y << "\n";
     geometry_msgs::Twist vel_msg;
     ros::Rate loop_rate(100);
     double E = 0.0;
@@ -249,10 +218,4 @@ void moveGoal (turtlesim::Pose goal_pose, double distance_tolerance) {
 
 double getDistance(double x1, double y1, double x2, double y2) {
     return sqrt(pow((x1-x2), 2) + pow((y1-y2), 2));
-}
-
-void getTurtles() {
-    for (int i = 0; i < MAX_TTURTLES; i++) {
-
-    }
 }

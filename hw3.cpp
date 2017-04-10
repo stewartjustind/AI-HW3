@@ -12,7 +12,7 @@
 using namespace std;
 
 const int MAX_TTURTLES = 3;
-const int MAX_XTURTLES = 4;
+const int MAX_XTURTLES = 3;
 const double DANGER_TOLERANCE = 0.5;
 const double LOWER_LIMIT = 0.0;
 const double UPPER_LIMIT = 11.0;
@@ -235,6 +235,9 @@ void captureTurtleT() {
     for (i=0; i<MAX_TTURTLES; i++) {
        dist = HW::getDistance(HW::turtle1.pose.x, HW::turtle1.pose.y, HW::tturtles[i].pose.x, HW::tturtles[i].pose.y);
        if (dist <= DANGER_TOLERANCE) {
+           ROS_INFO_STREAM(i);
+           ROS_INFO_STREAM(dist);
+
           reqk.name = HW::tturtles[i].turtlename;
           break;
        };
@@ -244,8 +247,11 @@ void captureTurtleT() {
         ROS_ERROR_STREAM("Error: Failed to capture " <<  HW::tturtles[i].turtlename << "\n");
 
     } else {
-        HW::tturtles[i].pose.x = -1;
-        HW::tturtles[i].pose.y = -1;
+        HW::tturtles[i].pose.x = -999;
+        HW::tturtles[i].pose.y = -999;
+        ROS_INFO_STREAM(HW::tturtles[i].turtlename);
+        ROS_INFO_STREAM(HW::tturtles[i].topicname);
+
         ROS_INFO_STREAM("!!! " <<  HW::tturtles[i].turtlename << " Captured !!!");
         killed++;
         if(killed == MAX_TTURTLES) {
@@ -283,8 +289,10 @@ void Turtle1Listener::doTest(const turtlesim::Pose::ConstPtr& msg) {
         HW::removeTurtle1();
 
     //test case 3
-    if(canCapture())
+    if(canCapture()){
+        ROS_INFO_STREAM("TURTLE1 CAPTURE");
         HW::captureTurtleT();
+    }
 };
 
 bool Turtle1Listener::isOffBoundary() {
@@ -314,7 +322,6 @@ bool Turtle1Listener::isTooClose() {
 }
 
 bool Turtle1Listener::canCapture() {
-
   int i;
   bool canCapture = false;
   double dist;
@@ -324,7 +331,7 @@ bool Turtle1Listener::canCapture() {
      dist = HW::getDistance(HW::turtle1.pose.x, HW::turtle1.pose.y, HW::tturtles[i].pose.x, HW::tturtles[i].pose.y);
      if (dist <= DANGER_TOLERANCE) {
         canCapture = true;
-        ROS_INFO_STREAM(HW::tturtles[i].turtlename << " was captured!");
+        ROS_INFO_STREAM(HW::tturtles[i].turtlename << " can be captured!");
         break;
      };
   };
@@ -371,36 +378,38 @@ class TTurtleListener {
   public:
     void doTest(const turtlesim::Pose::ConstPtr& msg, const string turtlename);
   private:
-    bool canCapture(int ti);
+    //bool canCapture(int ti);
 };
 
 //tturtle callback
 void TTurtleListener::doTest(const turtlesim::Pose::ConstPtr& msg, const string turtlename) {
 
-  int turtleIdt;
-  //update a tturtle pose whenever tturtle moves
-  turtleIdt = atoi(turtlename.substr(1).c_str()); //extract turtle # from turtlename
-  turtleIdt = turtleIdt - 1; //since index starts from 0
-  HW::tturtles[turtleIdt].pose.x = msg->x;
-  HW::tturtles[turtleIdt].pose.y = msg->y;
+  // int turtleIdt;
+  // //update a tturtle pose whenever tturtle moves
+  // turtleIdt = atoi(turtlename.substr(1).c_str()); //extract turtle # from turtlename
+  // turtleIdt = turtleIdt - 1; //since index starts from 0
+  // HW::tturtles[turtleIdt].pose.x = msg->x;
+  // HW::tturtles[turtleIdt].pose.y = msg->y;
 
-  if (canCapture(turtleIdt)) {
-     HW::captureTurtleT();
-  };
+  // if (canCapture(turtleIdt)) {
+  //    ROS_INFO_STREAM("TTURTLE CAPTURE");
+  //    HW::captureTurtleT();
+  // };
 
 };
 
-bool TTurtleListener::canCapture(int ti) {
-  double dist;
-  bool canCapture = false;
-
-  dist = HW::getDistance(HW::tturtles[ti].pose.x, HW::tturtles[ti].pose.y, HW::turtle1.pose.x, HW::turtle1.pose.y);
-  if (dist <= DANGER_TOLERANCE) {
-     canCapture = true;
-     ROS_INFO_STREAM(HW::tturtles[ti].turtlename << " was captured!");
-  };
-  return canCapture;
-}
+// bool TTurtleListener::canCapture(int ti) {
+//
+//   double dist;
+//   bool canCapture = false;
+//
+//   dist = HW::getDistance(HW::tturtles[ti].pose.x, HW::tturtles[ti].pose.y, HW::turtle1.pose.x, HW::turtle1.pose.y);
+//   if (dist <= DANGER_TOLERANCE) {
+//      canCapture = true;
+//      ROS_INFO_STREAM(HW::tturtles[ti].turtlename << " was captured!");
+//   };
+//   return canCapture;
+// }
 
 class HWTest {
   public:
