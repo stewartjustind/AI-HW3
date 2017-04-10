@@ -126,7 +126,8 @@ catkin_package(
 
 ## Declare a C++ executable
 # add_executable(hw3_node src/hw3_node.cpp)
-add_executable(hw3test hw3test.cpp)
+add_executable(hw3 hw3.cpp)
+add_executable(turtle_move turtle_move.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -136,7 +137,9 @@ add_executable(hw3test hw3test.cpp)
 # target_link_libraries(hw3_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(hw3test ${catkin_LIBRARIES})
+target_link_libraries(hw3 ${catkin_LIBRARIES})
+target_link_libraries(turtle_move ${catkin_LIBRARIES})
+
 
 #############
 ## Install ##
